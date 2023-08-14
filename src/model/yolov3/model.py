@@ -111,7 +111,7 @@ class YOLOv3(nn.Module):
     def forward(self, x):
         outputs = []  # for each scale
         route_connections = []
-        
+
         for layer in self.layers:
             if isinstance(layer, ScalePrediction):
                 outputs.append(layer(x))
@@ -148,7 +148,12 @@ class YOLOv3(nn.Module):
 
             elif isinstance(module, list):
                 num_repeats = module[1]
-                layers.append(ResidualBlock(in_channels, num_repeats=num_repeats,))
+                layers.append(
+                    ResidualBlock(
+                        in_channels,
+                        num_repeats=num_repeats,
+                    )
+                )
 
             elif isinstance(module, str):
                 if module == "S":
@@ -160,7 +165,9 @@ class YOLOv3(nn.Module):
                     in_channels = in_channels // 2
 
                 elif module == "U":
-                    layers.append(nn.Upsample(scale_factor=2),)
+                    layers.append(
+                        nn.Upsample(scale_factor=2),
+                    )
                     in_channels = in_channels * 3
 
         return layers

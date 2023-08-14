@@ -3,12 +3,11 @@ import os
 import albumentations as A
 import config
 import cv2
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from albumentations.pytorch import ToTensorV2
-from PIL import Image, ImageFont
+from PIL import Image
 from tqdm import tqdm
 
 from src.loss.yolov3 import YoloLoss
@@ -21,7 +20,11 @@ class YoloInfer:
         self.transform = A.Compose(
             [
                 A.Resize(config.IMAGE_SIZE, config.IMAGE_SIZE),
-                A.Normalize(mean=[0, 0, 0], std=[1, 1, 1], max_pixel_value=255,),
+                A.Normalize(
+                    mean=[0, 0, 0],
+                    std=[1, 1, 1],
+                    max_pixel_value=255,
+                ),
                 ToTensorV2(),
             ]
         )
@@ -38,7 +41,7 @@ class YoloInfer:
             model.load_state_dict(checkpoint["model_state_dict"], strict=False)
 
         return model
-    
+
     @staticmethod
     def pred_to_boxes(prediction, anchors):
         """
@@ -72,10 +75,14 @@ class YoloInfer:
 
         # objectness score
         obj_score = torch.sigmoid(prediction[..., 0:1])
-        return torch.cat([class_idx, obj_score, cx, cy, width_height, class_score], dim=-1)
-    
+        return torch.cat(
+            [class_idx, obj_score, cx, cy, width_height, class_score], dim=-1
+        )
+
     @staticmethod
-    def sort_3Dtensor_rows_on_two_columns(tensor, index1, index2, descending1=True, descending2=True):
+    def sort_3Dtensor_rows_on_two_columns(
+        tensor, index1, index2, descending1=True, descending2=True
+    ):
         """
         tensor = tensor([[[1, 2, 3],
                         [1, 3, 4],
@@ -85,10 +92,10 @@ class YoloInfer:
                         [1, 4, 5],
                         [0, 1, 2]]])
 
-        sort_tensor_rows_on_two_columns(tensor, 
-                                        index1=0, 
-                                        index2=1, 
-                                        descending1=False, 
+        sort_tensor_rows_on_two_columns(tensor,
+                                        index1=0,
+                                        index2=1,
+                                        descending1=False,
                                         descending2=True)
 
         output = tensor([[[0, 2, 1],
@@ -104,7 +111,9 @@ class YoloInfer:
             tensor, 1, inner_sorting.unsqueeze(-1).expand(-1, -1, tensor.size(2))
         )
 
-        outer_sorting = torch.argsort(inner_sorted[:, :, index1], stable=True, descending=descending2)
+        outer_sorting = torch.argsort(
+            inner_sorted[:, :, index1], stable=True, descending=descending2
+        )
         outer_sorted = torch.gather(
             inner_sorted,
             1,
@@ -113,7 +122,9 @@ class YoloInfer:
         return outer_sorted
 
     @staticmethod
-    def non_max_supression(self, prediction, iou_threshold, object_threshold, class_threshold):
+    def non_max_supression(
+        self, prediction, iou_threshold, object_threshold, class_threshold
+    ):
         """
         prediction = [batch, summation(num_anchors_per_scale * scale * scale), 7]
         i.e. [batch, (3 * 13 * 13 + 3 * 26 * 26 + 3 * 52 * 52), 7]
@@ -137,7 +148,9 @@ class YoloInfer:
         each element in the list = results/output of 1 image
         """
         # objectness condition [threshold]
-        objectness = (prediction[..., 1] > object_threshold) & (prediction[..., 6] > class_threshold)
+        objectness = (prediction[..., 1] > object_threshold) & (
+            prediction[..., 6] > class_threshold
+        )
         indices = torch.nonzero(objectness)
         batch_boxes = torch.split(
             tensor=prediction[objectness],
@@ -157,10 +170,10 @@ class YoloInfer:
                 top_box = boxes.pop(0)
 
                 idx = 0
-                
+
                 while idx < len(boxes):
                     box = boxes[idx]
-                    
+
                     # class match
                     if box[0] != top_box[0]:
                         break
@@ -171,19 +184,19 @@ class YoloInfer:
                         > iou_threshold
                     ):
                         del boxes[idx]
-                        
+
                         idx -= 1
-                    
+
                     idx += 1
 
                 final_boxes.append(top_box)
-            
+
             output.append(final_boxes)
 
         return output
-    
+
     @staticmethod
-    def draw_bounding_boxes(image, boxes):
+    def draw_bounding_boxes(image, boxes, font_size=1):
         """Draws bounding boxes on the image using OpenCV"""
         cmap = plt.get_cmap("tab20b")
         class_labels = (
@@ -209,8 +222,10 @@ class YoloInfer:
 
             color = colors[int(class_pred)]
             color_rgb = (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
-            thickness = max(int((0.0005 * (image.shape[0] + image.shape[1]) / 2) + 1), 1)
-            
+            thickness = max(
+                int((0.0005 * (image.shape[0] + image.shape[1]) / 2) + 1), 1
+            )
+
             cv2.rectangle(
                 im,
                 (upper_left_x, upper_left_y),
@@ -220,10 +235,13 @@ class YoloInfer:
             )
 
             # label
-            font_scale = thickness / 2
+            font_scale = font_size
             label = f"{class_labels[int(class_pred)]} {class_score}"
             text_size = cv2.getTextSize(
-                label, fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=1
+                label,
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=font_scale,
+                thickness=1,
             )[0]
 
             # Draw rectangle background
@@ -246,7 +264,7 @@ class YoloInfer:
             )
 
         return im
-    
+
     def infer(
         self,
         image: np.array,
@@ -267,7 +285,9 @@ class YoloInfer:
             # convert model prediction to actual box prediction
             output = torch.cat(
                 [
-                    self.pred_to_boxes(out, self.scaled_anchors[idx]).reshape(out.shape[0], -1, 7)
+                    self.pred_to_boxes(out, self.scaled_anchors[idx]).reshape(
+                        out.shape[0], -1, 7
+                    )
                     for idx, out in enumerate(output)
                 ],
                 dim=1,

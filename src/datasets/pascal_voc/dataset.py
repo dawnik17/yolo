@@ -23,7 +23,7 @@ class YOLODataset(Dataset):
         image_size=416,
         S=[13, 26, 52],
         transform=None,
-        load_mosaic=True
+        load_mosaic=True,
     ):
         self.annotations = pd.read_csv(csv_file)
         self.img_dir = img_dir
@@ -32,7 +32,7 @@ class YOLODataset(Dataset):
         self.transform = transform
         self.S = S
         self.load_mosaic = load_mosaic
-        
+
         # shape: [number of states, number of anchors, 2]
         self.anchors = torch.tensor(anchors)
         self.num_anchors_per_scale = self.anchors.shape[1]
@@ -47,7 +47,7 @@ class YOLODataset(Dataset):
             tensor shape: [2]
         anchors:
             tensor shape: [number of states, number of anchors, 2]
-            
+
         * 2 above is for width and height
         """
 
@@ -59,7 +59,9 @@ class YOLODataset(Dataset):
         label_path = os.path.join(self.label_dir, self.annotations.iloc[index, 1])
 
         # bboxes = np.loadtxt(fname=label_path, delimiter=" ", ndmin=2)
-        bboxes = np.roll(np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1)
+        bboxes = np.roll(
+            np.loadtxt(fname=label_path, delimiter=" ", ndmin=2), 4, axis=1
+        )
         img_path = os.path.join(self.img_dir, self.annotations.iloc[index, 0])
         image = np.array(Image.open(img_path).convert("RGB"))
 
@@ -80,12 +82,12 @@ class YOLODataset(Dataset):
             idx = torch.argsort(iou, descending=True, dim=-1)
             idx = idx[:, 0].tolist()
 
-            dimensions, class_ = np.array(bbox[:-1]), bbox[-1]#+1
+            dimensions, class_ = np.array(bbox[:-1]), bbox[-1]  # +1
 
             for scale_idx, anchor_id in enumerate(idx):
                 scale_dim = self.S[scale_idx]
                 scale_cx, scale_cy, scale_w, scale_h = dimensions * scale_dim
-                
+
                 row, col = int(scale_cy), int(scale_cx)
 
                 # fill values
@@ -99,7 +101,7 @@ class YOLODataset(Dataset):
                 targets[scale_idx][anchor_id, row, col] = box_target
 
         return image, targets
-    
+
 
 if __name__ == "__main__":
     from src.run.yolov3 import config

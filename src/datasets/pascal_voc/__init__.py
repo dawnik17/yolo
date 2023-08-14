@@ -1,1 +1,1 @@
-from src.datasets.pascal_voc.dataset import YOLODataset
+from .dataset import YOLODataset
