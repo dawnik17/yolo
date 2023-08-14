@@ -302,3 +302,31 @@ class YoloInfer:
             )
 
         return self.draw_bounding_boxes(image, output[0])
+
+    @staticmethod
+    def load_image_as_array(image_path):
+        # Load a PIL image
+        pil_image = Image.open(image_path)
+
+        # Convert PIL image to NumPy array
+        return np.array(pil_image.convert("RGB"))
+    
+    @staticmethod
+    def plot_array(array: np.array, figsize=(10,10)):
+        plt.figure(figsize=figsize)
+        plt.imshow(array)
+        plt.show()
+
+    @staticmethod
+    def save_numpy_as_image(numpy_array, image_path):
+        """
+        Saves a NumPy array as an image.
+        Args:
+            numpy_array (numpy.ndarray): The NumPy array to be saved as an image.
+            image_path (str): The path where the image will be saved.
+        """
+        # Convert the NumPy array to a PIL image
+        image = Image.fromarray(numpy_array)
+        
+        # Save the PIL image to the specified path
+        image.save(image_path)
