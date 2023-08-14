@@ -1,7 +1,6 @@
 import os
 
 import albumentations as A
-import config
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,6 +11,7 @@ from tqdm import tqdm
 
 from src.loss.yolov3 import YoloLoss
 from src.model.yolov3 import YOLOv3 as Model
+from src.run.yolov3 import config
 
 
 class YoloInfer:
