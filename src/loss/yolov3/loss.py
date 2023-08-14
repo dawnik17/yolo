@@ -18,7 +18,7 @@ class YoloLoss(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
         # Constants signifying how much to pay for each respective part of the loss
-        self.lambda_class = 5 # 1.5
+        self.lambda_class = 5  # 1.5
         self.lambda_noobj = 2
         self.lambda_obj = 1
         self.lambda_box = 2
@@ -93,11 +93,7 @@ class YoloLoss(nn.Module):
         predictions shape: [batch, 3, 13, 13]
         target shape: [batch, 3, 13, 13]
         """
-        no_object_loss = self.bce(
-            predictions[..., 0][noobj],
-            target[..., 0][noobj]
-            
-        )
+        no_object_loss = self.bce(predictions[..., 0][noobj], target[..., 0][noobj])
 
         """
         object loss
@@ -105,12 +101,8 @@ class YoloLoss(nn.Module):
         predictions[..., 0][obj] shape: [total_object_in_batch]
         target[..., 0][obj] shape: [total_object_in_batch]
         """
-        object_loss = self.bce(
-            predictions[..., 0][obj],
-            target[..., 0][obj]
-            
-        )
-            
+        object_loss = self.bce(predictions[..., 0][obj], target[..., 0][obj])
+
         anchors = anchors.reshape(1, 3, 1, 1, 2)
         box_preds = torch.cat(
             [
@@ -168,32 +160,32 @@ class YoloLoss(nn.Module):
             + self.lambda_class * binary_class_loss
         )
 
-    
+
 if __name__ == "__main__":
     from src.run.yolov3 import config
     from src.datasets.pascal_voc import YOLODataset
 
     S = 13
     yl = YoloLoss(nclasses=20)
-    
+
     predictions = torch.rand((20, 3, S, S, 25))
-    
+
     # build target
     IMAGE_SIZE = config.IMAGE_SIZE
 
     train_dataset = YOLODataset(
         config.DATASET + "/train.csv",
-        transform=None, #config.train_transforms,
+        transform=None,  # config.train_transforms,
         S=[IMAGE_SIZE // 32, IMAGE_SIZE // 16, IMAGE_SIZE // 8],
         img_dir=config.IMG_DIR,
         label_dir=config.LABEL_DIR,
         anchors=config.ANCHORS,
     )
     _, target = train_dataset[3]
-    target = target[0].unsqueeze(0) # target[0] if S=13
+    target = target[0].unsqueeze(0)  # target[0] if S=13
     target = torch.cat([target, target] * 10)
-    
+
     # anchor
     anchor = S * train_dataset.anchors[0]
-    
+
     print(yl(predictions, target, anchor))

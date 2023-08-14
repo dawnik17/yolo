@@ -271,7 +271,7 @@ class YoloInfer:
         iou_threshold=0.75,
         object_threshold=0.75,
         class_threshold=0.5,
-        font_size=1
+        font_size=1,
     ):
         self.model.eval()
         input_tensor = self.transform(image=image)["image"].unsqueeze(0)
@@ -311,9 +311,9 @@ class YoloInfer:
 
         # Convert PIL image to NumPy array
         return np.array(pil_image.convert("RGB"))
-    
+
     @staticmethod
-    def plot_array(array: np.array, figsize=(10,10)):
+    def plot_array(array: np.array, figsize=(10, 10)):
         plt.figure(figsize=figsize)
         plt.imshow(array)
         plt.show()
@@ -328,6 +328,6 @@ class YoloInfer:
         """
         # Convert the NumPy array to a PIL image
         image = Image.fromarray(numpy_array)
-        
+
         # Save the PIL image to the specified path
         image.save(image_path)
