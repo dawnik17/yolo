@@ -271,6 +271,7 @@ class YoloInfer:
         iou_threshold=0.75,
         object_threshold=0.75,
         class_threshold=0.5,
+        font_size=1
     ):
         self.model.eval()
         input_tensor = self.transform(image=image)["image"].unsqueeze(0)
@@ -301,7 +302,7 @@ class YoloInfer:
                 class_threshold=class_threshold,
             )
 
-        return self.draw_bounding_boxes(image, output[0])
+        return self.draw_bounding_boxes(image, output[0], font_size=font_size)
 
     @staticmethod
     def load_image_as_array(image_path):
