@@ -123,7 +123,7 @@ class YoloInfer:
 
     @staticmethod
     def non_max_supression(
-        self, prediction, iou_threshold, object_threshold, class_threshold
+        prediction, iou_threshold, object_threshold, class_threshold
     ):
         """
         prediction = [batch, summation(num_anchors_per_scale * scale * scale), 7]
@@ -136,7 +136,7 @@ class YoloInfer:
         first sort by class prediction, 
         and inside each class sort objectness in descending 
         """
-        prediction = self.sort_3Dtensor_rows_on_two_columns(
+        prediction = YoloInfer.sort_3Dtensor_rows_on_two_columns(
             tensor=prediction, index1=0, index2=1, descending1=True, descending2=True
         )
 
