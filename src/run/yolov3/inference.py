@@ -161,7 +161,7 @@ class YoloInfer:
         # iterate for output
         output = []
 
-        for boxes in tqdm(batch_boxes, disable=False):
+        for boxes in tqdm(batch_boxes, disable=True):
             # boxes shape = [-1, 7]
             boxes = boxes.tolist()
             final_boxes = []
